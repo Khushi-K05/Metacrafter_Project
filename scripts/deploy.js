@@ -1,23 +1,40 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+
+const { ethers } = require("hardhat");
+const fs = require('fs');
 
 async function main() {
-  const initBalance = 1;
-  const Assessment = await hre.ethers.getContractFactory("Assessment");
-  const assessment = await Assessment.deploy(initBalance);
-  await assessment.deployed();
+  const Bank = await ethers.getContractFactory("Bank");
+  const bank = await Bank.deploy();
+  await bank.deployed();
 
-  console.log(`A contract with balance of ${initBalance} eth deployed to ${assessment.address}`);
+  console.log("Bank contract deployed to:", bank.address);
+
+  // Fetch ABI
+  const abi = Bank.interface.format('json');
+
+  // Save ABI to a file (optional)
+  try {
+    fs.writeFileSync('BankABI.json', JSON.stringify(abi, null, 2));
+    console.log("ABI saved to BankABI.json file");
+  } catch (error) {
+    console.error("Error saving ABI:", error);
+  }
+
+  return {
+    address: bank.address,
+    abi: abi
+  };
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then((contractInfo) => {
+    console.log("Contract deployment successful!");
+    console.log("Contract Address:", contractInfo.address);
+    console.log("ABI:");
+    console.log(contractInfo.abi); // Ensure ABI is logged correctly
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error("Error deploying contract:", error);
+    process.exit(1);
+  });
